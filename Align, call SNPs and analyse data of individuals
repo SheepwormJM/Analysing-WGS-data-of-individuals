@@ -224,7 +224,13 @@ dev.off()
 
 ####### NOTE - alternative way to plot PCA #########################
 
+# You will first need to make a plink file. 
+# Use plink 1.9 to do this. 
 
+#####################################################################
+
+# Determine Kinship analysis - are any individuals going to bias your data as they are closely related?
+# Or, are these what you are looking for? 
 
 #####################################################################
 
