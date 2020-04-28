@@ -225,7 +225,10 @@ dev.off()
 ####### NOTE - alternative way to plot PCA #########################
 
 # You will first need to make a plink file. 
-# Use plink 1.9 to do this. 
+# Use plink 1.9 to do this. (https://www.cog-genomics.org/plink/1.9/)
+# Can use the vcf file as input.
+
+
 
 #####################################################################
 
