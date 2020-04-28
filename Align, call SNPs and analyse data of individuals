@@ -193,6 +193,37 @@ bcftools-1.5 call -mv -O v > <file_name>.poolseq.variants.vcf
 
 # Plot a PCA of individuals:
 
+install.package(gdsfmt)
+install.package(SNPRelate)
+install.package(ggrepel)
+
+library(gdsfmt)
+library(SNPRelate)
+library(ggplot2)
+library(ggrepel)
+
+#---- INPUT FILES
+vcf="<file_name>.vcf"
+#group="host"
+
+#---- Run script
+#colour_group=read.table(group, header=F)
+
+SNPRelate::snpgdsVCF2GDS(vcf.fn=vcf, out.fn="out.recode.vcf.gds")
+genofile_vcf <- snpgdsOpen(filename="out.recode.vcf.gds", readonly = FALSE, allow.duplicate = TRUE)
+vcf_pca <- snpgdsPCA(genofile_vcf, autosome.only=FALSE)
+
+# make plot
+pdf("Fl.v2b7c.vcf.PCA.pdf")
+ggplot() + geom_point(aes(vcf_pca$eigenvect[,1],vcf_pca$eigenvect[,2]), colour=pop_map$V3) + ylab(paste0("PC2: ",vcf_pca$varprop[2])) + xlab(paste0("PC1: ",vcf_pca$varprop[1])) + geom_text_repel(aes(vcf_pca$eigenvect[,1],vcf_pca$eigenvect[,2], label=vcf_pca$sample.id), cex=1)
+dev.off()
+
+png("Fl.v2b7c.vcf.PCA.png")
+ggplot() + geom_point(aes(vcf_pca$eigenvect[,1],vcf_pca$eigenvect[,2]), colour=pop_map$V3) + geom_text_repel(aes(vcf_pca$eigenvect[,1],vcf_pca$eigenvect[,2], label=vcf_pca$sample.id), cex=1) + ylab(paste0("PC2: ",vcf_pca$varprop[2])) + xlab(paste0("PC1: ",vcf_pca$varprop[1]))
+dev.off()
+
+####### NOTE - alternative way to plot PCA #########################
+
 
 
 #####################################################################
