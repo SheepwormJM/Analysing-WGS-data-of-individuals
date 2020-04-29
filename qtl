@@ -85,6 +85,10 @@ plotInfo(hyper, chr=c(1,4,15))
 plotInfo(hyper, chr=c(1,4,15), method="entropy")
 plotInfo(hyper, chr=c(1,4,15), method="variance")
 
+### QTL analysis:
+
+# R/qtl uses hidden Markov model (HMM) technology to calculate QTL genotype probabilities.
+# It allows for some error of genotyping
 
 
 
