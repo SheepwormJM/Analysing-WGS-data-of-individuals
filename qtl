@@ -1,0 +1,92 @@
+# Analysing using R/qtl:
+
+# You need individuals typed at markers, with phenotype data. 
+
+library(qtl)
+
+# To get the tutorial code do: 
+url.show("https://rqtl.org/rqtltour.R")
+
+# Within the tutorial is some hypertension data - 250 male mice, with a single hypertension phenotype and 174 genetic markers.
+# To get the tutorial data do:
+data(hyper)
+ls()
+# To learn about the data do:
+?hyper
+summary(hyper)
+nind(hyper)
+nphe(hyper)
+nchr(hyper)
+totmar(hyper)
+nmar(hyper)
+# In the plot below, missing data is coloured black. 
+plot(hyper)
+# Or, you can plot just one piece of the data:
+plotMissing(hyper)
+plotMap(hyper)
+# There is one phenotype - hypertension value, but there is a second 'pheno' indicating that individuals are male:
+plotPheno(hyper, pheno.col=1)
+plotPheno(hyper, pheno.col=2)
+plotMap(hyper, chr=c(1, 4, 6, 7, 15), show.marker.names=TRUE)
+
+# You can order individuals by phenotype:
+plotMissing(hyper, reorder=TRUE)
+
+# You can remove markers with no data in any individual (i.e. not a single individual has data):
+hyper <- drop.nullmarkers(hyper)
+totmar(hyper)
+
+# Estimate recombination fractions between all pairs of markers, and plot them. 
+# This also calculates LOD scores for the test of H0: r = 1/2. 
+# The plot of the recombination fractions can be either with recombination fractions in the upper part
+# and LOD scores below, or with just recombination fractions or just LOD scores. 
+# Red corresponds to a small recombination fraction or a big LOD score
+# Blue corresponds to a large recombination fraction (rarely inherited together) and a low LOD score.
+# Gray indicates missing values.
+hyper <- est.rf(hyper)
+plotRF(hyper)
+plotRF(hyper, chr=c(1,4), mark.diagonal=T, alternate.chrid=T, chr=c(1,4,15), what="lod")
+# Note that what can be "rf" or "lod" or "both", by default both are plotted - with rf above and lod below. 
+
+# Re-estimate the genetic map (keeping the order of markers fixed), and plot the original map against the newly estimated
+# one.
+newmap <- est.map(hyper, error.prob=0.01)
+plotMap(hyper, newmap)
+
+# Do you want to replace with the new estimated map? Think carefully about this... 
+# If you do, then you can do it with: 
+# hyper <- replace.map(hyper, newmap)
+
+# We now turn to the identification of genotyping errors. In the following, we calculate the error LOD scores of Lincoln
+# and Lander (1992). A LOD score is calculated for each individual at each marker; large scores indicate likely genotyping
+# errors.
+hyper <- calc.errorlod(hyper, error.prob=0.01)
+# This calculates the genotype error LOD scores and inserts them into the hyper object.
+# The function top.errorlod gives a list of genotypes that may be in error. Error LOD scores < 4 can probably be
+# ignored.
+top.errorlod(hyper)
+
+# The function plotGeno may be used to inspect the observed genotypes for a chromosome, with likely genotyping errors
+# flagged. Of course, it’s difficult to look at too many individuals at once. Note that white = AA and black = AB (for a
+# backcross).
+plotGeno(hyper, chr=16, ind=c(24:34, 71:81))
+# Blue cross suggests a recombination breakpoint.
+# Errors are shown using a red box outline.
+# It looks like, in this dataset, that it has suggested errors where there is a low chance of recombination, yet the individual 
+# has appraently experienced recombination there. But then has experienced it AGAIN on the other side.... 
+# Any errors identified need to be checked in the raw data (not in qtl program).
+
+# The function plotInfo plots a measure of the proportion of missing genotype information in the genotype data. The
+# missing information is calculated in two ways: as entropy, or via the variance of the conditional genotypes, given the
+# observed marker data. (See the help file, using ?plotInfo.)
+# NOTE - not quite sure what this is. 
+plotInfo(hyper)
+plotInfo(hyper, chr=c(1,4,15))
+plotInfo(hyper, chr=c(1,4,15), method="entropy")
+plotInfo(hyper, chr=c(1,4,15), method="variance")
+
+
+
+
+
+
