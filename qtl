@@ -144,6 +144,12 @@ max(out.em)
 max(out.hk)
 max(out.imp)
 
+# I then tried to look at Chr4 with just some individuals - aiming for those of the extreme - but unable to figure out 
+# how to determine which individual had which phenotype.
+# The order by phenotype for plot missing was great, but doesn't actually correspond to an individuals number.
+# Those with the extreme phenotypes are inviduals 1-~100 in the cross object, but don't know which is which.
+plotGeno(hyper, chr=4, ind=c(1:100))
+# This lets you see that there is a split in the genotypes, but not how they fit the phenotype. 
 
 
 
