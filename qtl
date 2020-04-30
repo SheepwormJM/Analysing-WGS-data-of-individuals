@@ -88,7 +88,67 @@ plotInfo(hyper, chr=c(1,4,15), method="variance")
 ### QTL analysis:
 
 # R/qtl uses hidden Markov model (HMM) technology to calculate QTL genotype probabilities.
-# It allows for some error of genotyping
+# They simulate from the joint genotype distribution and calculate the most likely sequence of underlying genotypes (I assume for
+# the phenotype) - based on the observed genotypes in the data.
+# It allows for some error of genotyping.
+# Note, they assume, for convenience, no 'crossover interference' - crossover interference was a phrase coined by Muller which 
+# states that during meiosis, recombination events don't occur more than once on a chromosome - or at least that they are prevented 
+# from occuring close together. This seems to be regulated in C. elegans by the enzyme RTEL-1. Mutants for this enzyme have inc.
+# crossovers during meiosis. Recombination rate in humans increases as the female ages. 
+
+# step = the stepsize (in cM) at which probabilities are calculated, and at which LOD scores will later be calculated.
+# 1cM = Recombination of 1%
+# Note that recombination cannot exceed 50%(?) but the map length (in cM) can - providing you have enough markers - so if you only
+# have 2, I think it can't be longer than 50 cM, but if you have several then you might identify that between two markers there is a 
+# cM distance of, say, 20, between one of these and another is, say 34 cM, and then between a third is, say, 15 cM - so total is
+# 20+34+15 = 69cM..... (https://biology.stackexchange.com/questions/35803/genetic-linkage-greater-than-50-centimorgans). We cannot tell
+# whether unlinked markers are co-segregating 50% of the time or linked markers are inherited together 50% of the time - the
+# recombination rate, r, is a value between 0 and 0.5. 
+
+# To calculate genotype probabilities, based on the observed markers:
+hyper <- calc.genoprob(hyper, step=1, error.prob=0.01)
+
+# To perform a single-QTL (a single QTL controls the phenotype I think) genome scan with a normal model:
+# Note that the model chosen (default normal) relates to the phenotype data - can have normal, binary, two-part (not sure what this is
+# for), or non-parametric. 
+# The method determines the way to estimate the genotypes
+# maximum likelihood via the EM algorithm (Lander and Botstein 1989) or use Haley-Knott regression (Haley and Knott
+# 1992).
+# multiple imputation method of Sen and Churchill (2001). This requires that we first use sim.geno
+# to simulate from the joint genotype distribution, given the observed marker data.
+# n.draws indicates the number of imputations to perform. Larger values = inc. precision but takes more time and memory.
+out.em <- scanone(hyper)
+out.hk <- scanone(hyper, method="hk")
+hyper <- sim.geno(hyper, step=2, n.draws=16, error.prob=0.01)
+out.imp <- scanone(hyper, method="imp")
+
+summary(out.em)
+# Gives the max LOD score and position on each chromosome.
+summary(out.em, threshold=3)
+#         chr  pos  lod
+#c1.loc89   1 92.3 3.73
+#D4Mit164   4 37.3 8.06
+summary(out.hk, threshold=3)
+#         chr  pos  lod
+#c1.loc89   1 92.3 3.76
+#D4Mit164   4 37.3 8.09
+summary(out.imp, threshold=3)
+#         chr  pos  lod
+#c1.loc92   1 95.3 3.62
+#D4Mit164   4 37.3 8.07
+
+## Note that imp has pulled out a different marker on Chr1 to the other two.
+
+# Or, could get just the highest LOD score on each chromosome:
+max(out.em)
+max(out.hk)
+max(out.imp)
+
+
+
+
+
+
 
 
 
