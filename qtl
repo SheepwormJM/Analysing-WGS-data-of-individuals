@@ -151,9 +151,105 @@ max(out.imp)
 plotGeno(hyper, chr=4, ind=c(1:100))
 # This lets you see that there is a split in the genotypes, but not how they fit the phenotype. 
 
+# To plot the LOD scores against the markers (in cM):
+plot(out.em, chr=c(1,4,15))
+# Plot all three LOD estimates on the same graph (max three using this code):
+plot(out.em, out.hk, out.imp, chr=c(1,4,15))
+# Plot each LOD estimate separately, but layer them one on top of the other on the same graph (the add=TRUE is what does it):
+plot(out.em, chr=c(1,4,15))
+plot(out.hk, chr=c(1,4,15), col="blue", add=TRUE)
+plot(out.imp, chr=c(1,4,15), col="red", add=TRUE)
+
+# The function scanone may also be used to perform a permutation test to get a genome-wide LOD significance threshold.
+# n.perm (If specified, a permutation test is performed rather than an analysis of the observed data. 
+# This argument defines the number of permutation replicates)
+# For Haley-Knott regression, this can be quite fast.
+
+operm.hk <- scanone(hyper, method="hk", n.perm=1000)
+summary(operm.hk, alpha=0.05)
+# LOD thresholds (1000 permutations)
+#    lod
+# 5% 2.73
+# Can change alpha for to get 1% etc: summary(operm.hk, alpha=0.01)
+
+# To get the permutations and p-values for the calculated LOD scores for markers can do the following - note the 5% cut-off included:
+summary(out.hk, perms=operm.hk, alpha=0.05, pvalues=TRUE)
+#         chr  pos  lod  pval
+# c1.loc89   1 92.3 3.76 0.008
+# D4Mit164   4 37.3 8.09 0.000
+# Removing alpha would return all chromosome LOD scores. And (presuambly) let you know whether they are significantly greater than the
+# genome wide LOD threshold calculated by permutation testing.
+
+### What if there were two QTL contributing to the phenotype? Interactive or additive in their effect?
+# scantwo performs a two-dimensional genome scan with a two-QTL model. For every pair of positions, it
+# calculates a LOD score for the full model (two QTL plus interaction) and a LOD score for the additive model (two QTL
+# but no interaction). This be quite time consuming, and so you may wish to do the calculations on a coarser grid.
+
+hyper <- calc.genoprob(hyper, step=5, error.prob=0.01)
+out2.hk <- scantwo(hyper, method="hk")
+
+# You can also use the other methods, (em or imp) but these are more time consuming. 
+
+# summary(out2.hk)
+# Doing the summary is fairly pointless - too much info! 
 
 
+# The summary function considers each pair of chromosomes, and calculates the maximum LOD score for the full model
+# (Mf) and the maximum LOD score for the additive model (Ma). These two models are allowed to be maximized at
+# different positions. We futher calculate a LOD score for a test of epistasis, Mi = Mf − Ma, and two LOD scores that
+# concern evidence for a second QTL: Mfv1 is the LOD score comparing the full model to the best single-QTL model and
+# Mav1 is the LOD score comparing the additive model to the best single-QTL model.
+# In the summary, we must provide five thresholds, for Mf , Mfv1, Mi, Ma, and Mav1, respectively. Call these Tf , Tfv1,
+# Ti, Ta, and Tav1. We then report those pairs of chromosomes for which at least one of the following holds:7
+# • Mf ≥ Tf and (Mfv1 ≥ Tfv1 or Mi ≥ Ti)
+# • Ma ≥ Ta and Mav1 ≥ Tav1
+# The thresholds can be obtained by a permutation test (see below), but this is extremely time-consuming. For a mouse
+# backcross, we suggest the thresholds (6.0, 4.7, 4.4, 4.7, 2.6) for the full, conditional-interactive, interaction, additive, and
+# conditional-additive LOD scores, respectively. For a mouse intercross, we suggest the thresholds (9.1, 7.1, 6.3, 6.3, 3.3)
+# for the full, conditional-interactive, interaction, additive, and conditional-additive LOD scores, respectively. These were
+# obtained by 10,000 simulations of crosses with 250 individuals, markers at a 10 cM spacing, and analysis by Haley-Knott
+# regression.
+summary(out2.hk, thresholds=c(6.0, 4.7, 4.4, 4.7, 2.6))
+# The appropriate decision rule is not yet completely clear. I am inclined to ignore Mi and to choose genome-wide
+# thresholds for the other four based on a permutation, using a common significance level for all four. Mi would be
+# ignored if we gave it a very large threshold, as follows.
+summary(out2.hk, thresholds=c(6.0, 4.7, Inf, 4.7, 2.6))
 
+plot(out2.hk)
+plot(out2.hk, chr=c(1,4,6,15))
+# Note, the upper left triangle contains the LOD scores for Mi, and the lower right contains the LOD for Ma
+
+max(out2.hk)
+# two-locus positions with the maximum LOD score for the full and additive models
+
+# To get a genome-wide LOD significance thresholds by permutation testing (can be quite time consuming!):
+operm2.hk <- scantwo(hyper, method="hk", n.perm=100)
+summary(operm2.hk)
+
+# Can use the permutations to get the p-values for the LOD scores for the models. If want to ignore the interaction threshold then
+# put alpha as 0, which equates to a threshold of infinity:
+summary(out2.hk, perms=operm2.hk, pvalues=TRUE, alphas=c(0.05, 0.05, 0, 0.05, 0.05))
+
+# NOTE: You can’t really trust these results. Haley-Knott regression performs poorly in the case of selective genotyping (as with
+# the hyper data). Standard interval mapping or imputation would be better, but Haley-Knott regression has the advantage
+# of speed, which is the reason we use it here.
+
+### To check the fit of the models used:
+
+# Currently, only multiple imputation and Haley-Knott regression has been implemented. We use multiple imputation here, 
+# as Haley-Knott regression performs poorly in the case of selective genotyping, which was used for the hyper data.
+
+# We make a qtl as below, with 5 QTL at fixed and specified positions:
+chr <- c(1, 1, 4, 6, 15)
+pos <- c(50, 76, 30, 70, 20)
+qtl <- makeqtl(hyper, chr, pos)
+
+
+# Finally, we use the function fitqtl to fit a model with five QTL, and allowing the QTL on chr 6 and 15 to interact.
+my.formula <- y ~ Q1 + Q2 + Q3 + Q4 + Q5 + Q4:Q5
+out.fitqtl <- fitqtl(hyper, qtl=qtl, formula=my.formula)
+summary(out.fitqtl)
+# See Example 5 (page 14) for a thorough discussion of the multiple QTL mapping methods in R/qtl.
 
 
 
