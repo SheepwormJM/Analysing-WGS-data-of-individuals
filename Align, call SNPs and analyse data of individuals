@@ -16,6 +16,10 @@
 # Indels: FreeBayes / VarScan > Platypus  > Samtools
 # GATKv3HC is also a good bet, but would need it installed.
 
+# FreeBayes is a Bayesian tool - provide it with the ref genome and as many individuals with short reads sequenced from a population 
+# as you like. It will determine what it believes to be common population level SNPs, small indels, MNPs and complex events(?) 
+# shorter than the read length and output a VCF file. (Garrison and Marth, arXiv, 2012)
+
 ################################# CODE ################################################################
 ################## Note, not yet tested! ##############################################################
 
@@ -29,9 +33,15 @@ multiqc *<common_end_of_directory>/*<suffix_of_file>
 
 # Do you need to trim reads etc?
 
+# If you do - then could use Cutadapt (Martin 2011) to remove adaptor sequences
+# Could use Trimmomatic (Bolger et al 2014) to trim reads by base quality (using the ascii Phred scores produced by Illumina) 
+# with a sliding window along the read.
+
 #####################################################################
 
 # Align the data:
+# Use Burrows Wheeler Alignment algorithm (Burrows&Wheeler 1994)
+
 # Script belongs to Dr S. Doyle, WSI
 # Uses samtools (Li et al., 2009) and BWA-MEM (Li, 2013; Li and Durbin, 2009)
 # Put in the command line when run the script:
@@ -179,6 +189,11 @@ samtools-1.3 mpileup -B -q 20 -Q 30 \
 -b poolseq_bam_files/bam.list | \
 bcftools-1.5 call -mv -O v > <file_name>.poolseq.variants.vcf 
 
+# Note, the VCF file will have information related to:
+# 1. ##INFO= information related to the info section of the VCF file
+# 2. ##Filter= information as to what filters were applied to the data to produce the result in the filter column
+# 3. ##FORMAT= information related to the format of the file (i.e. it tells you what is present in each of the individual sample columns.
+
 #####################################################################
 
 # Check the data:
@@ -241,7 +256,31 @@ dev.off()
 
 
 
+#####################################################################
+
+# Determine the effect of variants.
+
+# Could use the Variant Effect Predictor (https://www.ensembl.org/Tools/VEP) if you have the right species.
+# If you have human data, could use: https://gene.iobio.io/
+# Could also use snpEff. 
 
 
+
+#####################################################################
+
+# R tool available via bioconductor:
+
+# SNPRelate
+# GWASTools
+# Correlate ChIPSeq data with SNP data - SNPhood or FunciSNP
+
+
+
+######################################################################
+
+# PLINK
+# Toolset for GWAS 
+
+# http://zzz.bwh.harvard.edu/plink/tutorial.shtml
 
 
